@@ -26,6 +26,7 @@ jobs:
       container: stellargroup/build_env:19
       base-targets: hpx_core core components
       shards: 25
+      split: interleaved
       configure: |
         mkdir -p "$GITHUB_WORKSPACE/build"
         cd "$GITHUB_WORKSPACE/build"
