@@ -69,6 +69,10 @@ on:
         description: "Number of test shards"
         type: number
         default: 25
+      split:
+        description: "How the tests are spread over the shards: 'contiguous' (consecutive tests by name) or 'interleaved' (the targets dealt out one by one, so that every shard gets a mix of cheap and expensive tests)"
+        type: string
+        default: contiguous
       exclude-files:
         description: "Whitespace-separated files (relative to the repository) listing tests to leave out (if this and exclude-regex-files are empty: .github/workflows/exclude.targets)"
         type: string
@@ -142,6 +146,8 @@ jobs:
         id: gen_matrix
         shell: bash
         working-directory: build
+        env:
+          SPLIT: ${{ inputs.split }}
         run: |
           declare -a exclude_args=()
           for file in ${{ inputs.exclude-files }}; do
@@ -153,7 +159,8 @@ jobs:
           # the Windows runners have no python3
           python=$(command -v python3 || command -v python)
           ctest -N | "$python" ../.github/ci-scripts/generate_test_matrix.py \
-            ${{ inputs.shards }} ${exclude_args[@]+"${exclude_args[@]}"} \
+            ${{ inputs.shards }} --split "$SPLIT" \
+            ${exclude_args[@]+"${exclude_args[@]}"} \
             > test_matrix.json
           printf 'matrix=%s\n' "$(cat test_matrix.json)" >> "$GITHUB_OUTPUT"
 
