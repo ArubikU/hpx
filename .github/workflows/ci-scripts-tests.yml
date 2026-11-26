@@ -1,0 +1,44 @@
+# Copyright (c) 2026 The STE||AR Group
+#
+# SPDX-License-Identifier: BSL-1.0
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+name: CI Scripts Tests
+
+# The scripts in .github/ci-scripts decide how the tests of every pull request
+# are split over the CI jobs, so they get tests of their own. These take
+# seconds and run only when the scripts change.
+on:
+  pull_request:
+    paths:
+      - '.github/ci-scripts/**'
+      - '.github/workflows/ci-scripts-tests.yml'
+  push:
+    branches:
+      - master
+      - 'release**'
+    paths:
+      - '.github/ci-scripts/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test-generate-test-matrix:
+    name: generate_test_matrix.py
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+        sparse-checkout: .github
+
+    - name: Run the tests
+      shell: bash
+      run: python3 .github/ci-scripts/test_generate_test_matrix.py
